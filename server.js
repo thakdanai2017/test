@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 var db;
 
 // Connect to the database before starting the application server.
-mongodb.MongoClient.connect(process.env.MONGODB_URI || "mongodb://<58160021db>:<123456>@ds139954.mlab.com:39954/58160021db", function (err, client) {
+mongodb.MongoClient.connect(process.env.MONGODB_URI || "mongodb://58160021db:123456@ds139954.mlab.com:39954/58160021db", function (err, client) {
   if (err) {
     console.log(err);
     process.exit(1);
@@ -76,11 +76,35 @@ function handleError(res, reason, message, code) {
   
   
   app.get("/api/contacts/:id", function(req, res) {
-      
+    db.collection(CONTACTS_COLLECTION).findOne({ _id: new ObjectID(req.params.id) }, function(err, doc) {
+      if (err) {
+        handleError(res, err.message, "Failed to get contact");
+      } else {
+        res.status(200).json(doc);
+      }
+    });
   });
   
   app.put("/api/contacts/:id", function(req, res) {
+    var updateDoc = req.body;
+    delete updateDoc._id;
+  
+    db.collection(CONTACTS_COLLECTION).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
+      if (err) {
+        handleError(res, err.message, "Failed to update contact");
+      } else {
+        updateDoc._id = req.params.id;
+        res.status(200).json(updateDoc);
+      }
+    });
   });
   
   app.delete("/api/contacts/:id", function(req, res) {
+    db.collection(CONTACTS_COLLECTION).deleteOne({_id: new ObjectID(req.params.id)}, function(err, result) {
+      if (err) {
+        handleError(res, err.message, "Failed to delete contact");
+      } else {
+        res.status(200).json(req.params.id);
+      }
+    });
   });
